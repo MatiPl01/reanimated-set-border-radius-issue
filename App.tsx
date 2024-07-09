@@ -1,118 +1,115 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
+import {View, TouchableNativeFeedback, StyleSheet} from 'react-native';
+import type {
+  NativeStackNavigationProp,
+  NativeStackScreenProps,
+} from '@react-navigation/native-stack';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import Animated from 'react-native-reanimated';
+import {NavigationContainer} from '@react-navigation/native';
 
-import React from 'react';
-import type {PropsWithChildren} from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
+type ParamList = {
+  Screen1?: object;
+  Screen2: {
+    title: string;
+    sharedTransitionTag: string;
+  };
+};
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+const Stack = createNativeStackNavigator<ParamList>();
 
-type SectionProps = PropsWithChildren<{
+interface CardProps {
+  navigation: NativeStackNavigationProp<ParamList>;
   title: string;
-}>;
+  transitionTag: string;
+  isOpen?: boolean;
+  nextScreen: keyof ParamList;
+}
 
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+function Card({
+  navigation,
+  title,
+  transitionTag,
+  isOpen = false,
+  nextScreen,
+}: CardProps) {
+  const goNext = (screenName: keyof ParamList) => {
+    navigation.navigate(screenName, {
+      title,
+      sharedTransitionTag: transitionTag,
+    });
+  };
+
+  const size = isOpen ? 300 : 100;
+
   return (
-    <View style={styles.sectionContainer}>
-      <Text
+    <TouchableNativeFeedback
+      onPress={() => {
+        goNext(nextScreen);
+      }}>
+      <Animated.View
+        sharedTransitionTag={transitionTag}
         style={[
-          styles.sectionTitle,
+          styles.fullWidth,
           {
-            color: isDarkMode ? Colors.white : Colors.black,
+            height: size,
+            width: size,
+            backgroundColor: 'red',
+            // borderRadius: size, // <any number> * size works (2.g. 2 * size, 1.1 * size, etc.)
+            borderRadius: 1000,
           },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
+        ]}
+      />
+    </TouchableNativeFeedback>
+  );
+}
+
+function Screen1({navigation}: NativeStackScreenProps<ParamList, 'Screen1'>) {
+  return (
+    <Animated.ScrollView style={styles.flexOne}>
+      <Card
+        navigation={navigation}
+        title={'Title'}
+        transitionTag={'tag'}
+        nextScreen="Screen2"
+      />
+    </Animated.ScrollView>
+  );
+}
+
+function Screen2({
+  route,
+  navigation,
+}: NativeStackScreenProps<ParamList, 'Screen2'>) {
+  const {title, sharedTransitionTag} = route.params;
+
+  return (
+    <View style={styles.flexOne}>
+      <Card
+        navigation={navigation}
+        title={title}
+        transitionTag={sharedTransitionTag}
+        isOpen={true}
+        nextScreen="Screen1"
+      />
     </View>
   );
 }
 
-function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
-
+export default function App() {
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+    <NavigationContainer>
+      <Stack.Navigator>
+        <Stack.Screen name="Screen1" component={Screen1} />
+        <Stack.Screen name="Screen2" component={Screen2} />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }
-
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
+  flexOne: {
+    flex: 1,
   },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
+  fullWidth: {
+    width: '100%',
   },
 });
-
-export default App;
